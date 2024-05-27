@@ -67,15 +67,23 @@ public:
             pressure_curve->connect_to(pressure_sk_output);
 
             // Alarm setup
-            const ParamInfo* pressure_limit = new ParamInfo[1]{{"pressure_limit", "Pressure Limit"}};
-            auto alarm_function = [](float pressure, float limit) -> bool {
-                return pressure < limit;
-            };
-            auto* pressure_alarm = new LambdaTransform<float, bool, float>(
-                alarm_function, default_limit_, pressure_limit, String(alarm_path_) + "/Pressure Alarm");
-            pressure_alarm->set_description("Alarm if the pressure falls below the set limit. Value in " + String(metadata_units_) + ".");
-            pressure_alarm->set_sort_order(initial_sort_order_ + 300);
-            pressure_curve->connect_to(pressure_alarm);
+            if(alarm_path_ != nullptr){
+                const ParamInfo* pressure_limit = new ParamInfo[1]{{"pressure_limit", "Pressure Limit"}};
+                auto alarm_function = [](float pressure, float limit) -> bool {
+                    return pressure < limit;
+                };
+                auto* pressure_alarm = new LambdaTransform<float, bool, float>(
+                    alarm_function, default_limit_, pressure_limit, String(alarm_path_) + "/Pressure Alarm");
+                pressure_alarm->set_description("Alarm if the pressure falls below the set limit. Value in " + String(metadata_units_) + ".");
+                pressure_alarm->set_sort_order(initial_sort_order_ + 300);
+                pressure_curve->connect_to(pressure_alarm);
+
+                if(enable_n2k_output){
+                    // Connect the pressure alarm to N2k dynamic sender
+                    pressure_alarm->connect_to(&(n2k_engine_dynamic_sender->low_oil_pressure_consumer_));
+                }
+            }
+
 
 #ifdef ENABLE_SIGNALK
             auto analog_resistance_sk_output = new SKOutputFloat(
@@ -88,14 +96,11 @@ public:
             if (enable_n2k_output) {
                 // Connect the pressure output to N2k dynamic sender
                 pressure_curve->connect_to(&(n2k_engine_dynamic_sender->oil_pressure_consumer_));
-
-                // Connect the pressure alarm to N2k dynamic sender
-                pressure_alarm->connect_to(&(n2k_engine_dynamic_sender->low_oil_pressure_consumer_));
             }
 
             if (display_present && display != nullptr) {
                 pressure_curve->connect_to(new LambdaConsumer<float>(
-                    [this, display](float value) { PrintValue(display, 2, String("Pressure ") + input_name_, value); }));
+                    [this, display](float value) { PrintValue(display, ads_channel_ +2, String("Pressure ") + input_name_, value); }));
             }
         }
     }

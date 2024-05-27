@@ -66,15 +66,22 @@ public:
             temperature_curve->connect_to(temperature_sk_output);
 
             // Alarm setup
-            const ParamInfo* temperature_limit = new ParamInfo[1]{{"temperature_limit", "Temperature Limit"}};
-            auto alarm_function = [](float temperature, float limit) -> bool {
-                return temperature > limit;
-            };
-            auto* temperature_alarm = new LambdaTransform<float, bool, float>(
-                alarm_function, default_limit_, temperature_limit, String(alarm_path_) + "/Temperature Alarm");
-            temperature_alarm->set_description("Alarm if the temperature exceeds the set limit. Value in " + String(metadata_units_) + ".");
-            temperature_alarm->set_sort_order(initial_sort_order_ + 300);
-            temperature_curve->connect_to(temperature_alarm);
+            if( alarm_path_ != nullptr) {
+                // Alarm setup (only for temperature sensors)
+                // Connect the temperature output to the alarm function (temperature > limit)
+                const ParamInfo* temperature_limit = new ParamInfo[1]{{"temperature_limit", "Temperature Limit"}};
+                auto alarm_function = [](float temperature, float limit) -> bool {
+                    return temperature > limit;
+                };
+                auto* temperature_alarm = new LambdaTransform<float, bool, float>(
+                    alarm_function, default_limit_, temperature_limit, String(alarm_path_) + "/Temperature Alarm");
+                temperature_alarm->set_description("Alarm if the temperature exceeds the set limit. Value in " + String(metadata_units_) + ".");
+                temperature_alarm->set_sort_order(initial_sort_order_ + 300);
+                temperature_curve->connect_to(temperature_alarm);
+                if(enable_n2k_output){
+                    temperature_alarm->connect_to(&(n2k_engine_dynamic_sender->over_temperature_consumer_));
+                }
+            }
 
 #ifdef ENABLE_SIGNALK
             auto analog_resistance_sk_output = new SKOutputFloat(
@@ -87,9 +94,6 @@ public:
             if (enable_n2k_output) {
                 // Connect the temperature output to N2k dynamic sender
                 temperature_curve->connect_to(&(n2k_engine_dynamic_sender->oil_temperature_consumer_));
-
-                // Connect the temperature alarm to N2k dynamic sender
-                temperature_alarm->connect_to(&(n2k_engine_dynamic_sender->over_temperature_consumer_));
             }
 
             if (display_present && display != nullptr) {

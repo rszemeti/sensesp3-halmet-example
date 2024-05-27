@@ -75,7 +75,7 @@ public:
 
             // Level converted to remaining volume in m3
             auto volume_transform = new Linear(tank_size_, 0, String(sk_path_) + "/Total Volume");
-            volume_transform->set_description("Total volume of tank in m3");
+            volume_transform->set_description("Total volume of tank in litres");
             volume_transform->set_sort_order(initial_sort_order_ + 200);
             level_curve->connect_to(volume_transform);
 
@@ -100,7 +100,7 @@ public:
 #endif
 
             if (enable_n2k_output) {
-                auto n2k_level_output = new N2kFluidLevelSender(String(sk_path_) + "/NMEA 2000", 1, N2kft_Water, 200, nmea2000, enable_n2k_output);
+                auto n2k_level_output = new N2kFluidLevelSender(String(sk_path_) + "/NMEA 2000", 1, N2kft_Fuel, 200, nmea2000, enable_n2k_output);
                 n2k_level_output->set_sort_order(initial_sort_order_ + 600);
                 volume_transform->connect_to(&(n2k_level_output->tank_level_consumer_));
             }

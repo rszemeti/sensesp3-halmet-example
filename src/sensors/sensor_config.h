@@ -18,8 +18,8 @@ struct AnalogueSensorConfig {
     const char* input_name;
     const char* sk_path;
     const char* description;
-    const char* alarm_path; // Only used for temperature sensors
-    float default_limit;    // Only used for temperature sensors
+    const char* alarm_path; // Only used for temperature and pressure sensors, set nulptr for no alarm
+    float default_limit;    // Only used for temperature and pressure sensors
     float tank_size;        // Only used for tank level sensors
     const char* metadata_units;
     const char* metadata_display_name;

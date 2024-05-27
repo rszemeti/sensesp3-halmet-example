@@ -61,16 +61,14 @@
 #include "sensors/analogue_pressure.h"
 #include "sensors/digital_alarm.h"
 
-
 using namespace sensesp;
 
 // Sensor configurations
 AnalogueSensorConfig sensor_configs[] = {
-    {TANK_LEVEL_SENSOR,  0, "A1", "/Main Engine Fuel", "Fuel Tank, Main Engine", nullptr, 0.0f, 1.0f, "m3", "Tank Volume", "Calculated tank remaining volume", "Tank Volume"},
-    {TEMPERATURE_SENSOR, 1, "A2", "/Main Engine Coolant Temperature", "Engine Coolant Temperature", "/Main Engine Coolant Temperature/Alarm", 100.0f, 0.0f, "C", "Engine Temperature", "Temperature", "Temp"},
-    {PRESSURE_SENSOR,    2, "A3", "/Main Engine Oil Pressure", "Engine Oil Pressure",  "/Main Engine Oil Pressure/Alarm", 100.0f, 0.0f, "Pa", "Oil Pressure", "Pressure", "Press"}
+    {TANK_LEVEL_SENSOR,  0, "A1", "/Main Engine Fuel", "Fuel Tank, Main Engine", nullptr, 0.0f, 1.0f, "l", "Tank Volume", "Calculated tank remaining volume", "Tank Volume"},
+    {TEMPERATURE_SENSOR, 1, "A2", "/Main Engine Coolant Temperature", "Engine Coolant Temperature", nullptr, 0.0f, 0.0f, "C", "Engine Temperature", "Temperature", "Temp"},
+    {PRESSURE_SENSOR,    2, "A3", "/Main Engine Oil Pressure", "Engine Oil Pressure",  nullptr, 25.0f, 0.0f, "Pa", "Oil Pressure", "Pressure", "Press"}
 };
-
 
 DigitalInputConfig digital_input_configs[] = {
     {2, "D2", LOW_OIL, false},
