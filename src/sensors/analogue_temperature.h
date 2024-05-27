@@ -98,7 +98,7 @@ public:
 
             if (display_present && display != nullptr) {
                 temperature_curve->connect_to(new LambdaConsumer<float>(
-                    [this, display](float value) { PrintValue(display, ads_channel_ + 2 , "Temperature", value); }));
+                    [this, display](float value) { PrintValue(display, 2 , "Temperature", value); }));
             }
         }
     }

@@ -1,10 +1,5 @@
-#ifndef SENSOR_CONFIG_H
-#define SENSOR_CONFIG_H
-
-#include "analogue_temperature.h"
-#include "tank_level.h"
-
-
+#ifndef ANALOGUE_SENSOR_CONFIG_H
+#define ANALOGUE_SENSOR_CONFIG_H
 
 enum SensorType {
     TEMPERATURE_SENSOR,
@@ -28,16 +23,4 @@ struct AnalogueSensorConfig {
     int initial_sort_order;
 };
 
-enum AlarmType {
-    LOW_OIL,
-    OVER_TEMP
-};
-
-// Digital input configurations
-struct DigitalInputConfig {
-    int pin;
-    const char* input_name;
-    AlarmType alarm_type;
-    bool inverted;
-};
-#endif // SENSOR_CONFIG_H
+#endif // ANALOGUE_SENSOR_CONFIG_H

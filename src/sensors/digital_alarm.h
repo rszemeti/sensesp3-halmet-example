@@ -14,11 +14,24 @@
 
 #include "halmet_digital.h"
 
-#include "sensors/sensor_config.h"
-
 extern bool alarm_states[4];
 
 using namespace sensesp;
+
+enum AlarmType {
+    LOW_OIL,
+    OVER_TEMP
+};
+
+// Digital input configurations
+struct DigitalInputConfig {
+    int pin;
+    const char* input_name;
+    AlarmType alarm_type;
+    bool inverted;
+};
+
+
 
 class DigitalAlarmInput {
 public:
@@ -62,6 +75,8 @@ public:
                         alarm_input->connect_to(&(n2k_engine_dynamic_sender->over_temperature_consumer_));
                     }
                     break;
+
+                    // FIXME: Transmit the alarms over SK as well.
             }
         }
     }
