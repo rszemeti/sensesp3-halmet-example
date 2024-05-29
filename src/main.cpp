@@ -243,7 +243,7 @@ void setup() {
     }
     // Loop through the sensor configurations and create sensors dynamically
     int sort_order = 1000;
-    for (const auto& config : sensor_configs) {
+    for (const auto& config : analogue_sensor_configs) {
         sort_order += 1000;
         if (config.type == TEMPERATURE_SENSOR) {
             AnalogTemperatureSensor temperature_sensor(
@@ -275,7 +275,7 @@ void setup() {
             config.metadata_display_name, config.metadata_description, config.metadata_short_name, config.initial_sort_order);
         tacho_input_sensor.connect(n2k_engine_rapid_sender, enable_n2k_output->get_value(), display_present, display);
     }
-    
+
     */
 
 
