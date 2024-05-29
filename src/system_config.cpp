@@ -1,23 +1,114 @@
 #include "system_config.h"
-// Sensor configurations
+#include <FS.h>
+#include <SPIFFS.h>
 
-std::vector<AnalogueSensorConfig> analogue_sensor_configs = {
-    {TANK_LEVEL_SENSOR,  0, "A1", "/Main Engine Fuel", "Fuel Tank, Main Engine", nullptr, 0.0f, 1.0f, "l", "Tank Volume", "Calculated tank remaining volume", "Tank Volume"},
-    {TEMPERATURE_SENSOR, 1, "A2", "/Main Engine Coolant Temperature", "Engine Coolant Temperature", nullptr, 0.0f, 0.0f, "C", "Engine Temperature", "Temperature", "Temp"},
-    {PRESSURE_SENSOR,    2, "A3", "/Main Engine Oil Pressure", "Engine Oil Pressure",  nullptr, 25.0f, 0.0f, "Pa", "Oil Pressure", "Pressure", "Press"}
-};
+SystemConfig::SystemConfig() {
+    // Optionally, you can initialize with default values
+}
 
-std::vector<TachoInputConfig> tacho_input_configs = {
-    {1, "D1", "/Tacho D1", "Enable RPM input D1", "Hz", "Main Engine Revolutions", "Main Engine Revolutions", "Revolutions", 5000}
-};
+const std::vector<AnalogueSensorConfig>& SystemConfig::getAnalogueSensorConfigs() const {
+    return analogue_sensor_configs_;
+}
 
-std::vector<DigitalInputConfig> digital_input_configs = {
-    {2, "D2", LOW_OIL, false},
-    {3, "D3", OVER_TEMP, true}
-};
+const std::vector<TachoInputConfig>& SystemConfig::getTachoInputConfigs() const {
+    return tacho_input_configs_;
+}
 
-std::vector<OneWireTemperatureConfig> onewire_temperature_configs = {
-    {"Oil Temperature", "/Temperature 1", "Engine oil temperature sensor on the 1-Wire bus.", "/Temperature 1/Oil Temperature Alarm", 383, "K", "Engine Oil Temperature", "Engine Oil Temperature", "Oil Temperature", 10000},
-    {"Coolant Temperature", "/Temperature 2", "Engine coolant temperature sensor on the 1-Wire bus.", "/Temperature 2/Coolant Temperature Alarm", 373, "K", "Engine Coolant Temperature", "Engine Coolant Temperature", "Coolant Temperature", 11000},
-    {"Exhaust Temperature", "/Temperature 3", "Engine wet exhaust temperature sensor on the 1-Wire bus.", "/Temperature 3/Exhaust Temperature Alarm", 333, "K", "Wet Exhaust Temperature", "Wet Exhaust Temperature", "Exhaust Temperature", 12000}
-};
+const std::vector<DigitalInputConfig>& SystemConfig::getDigitalInputConfigs() const {
+    return digital_input_configs_;
+}
+
+const std::vector<OneWireTemperatureConfig>& SystemConfig::getOneWireTemperatureConfigs() const {
+    return onewire_temperature_configs_;
+}
+
+bool SystemConfig::loadFromJson(const char* filename) {
+    // Initialize SPIFFS
+    if (!SPIFFS.begin()) {
+        Serial.println("Failed to mount file system");
+        return false;
+    }
+
+    // Open the JSON file
+    File configFile = SPIFFS.open(filename, "r");
+    if (!configFile) {
+        Serial.println("Failed to open config file");
+        return false;
+    }
+
+    // Parse the JSON file
+    size_t size = configFile.size();
+    std::unique_ptr<char[]> buf(new char[size]);
+    configFile.readBytes(buf.get(), size);
+
+    DynamicJsonDocument doc(4096);
+    DeserializationError error = deserializeJson(doc, buf.get());
+    if (error) {
+        Serial.println("Failed to parse config file");
+        return false;
+    }
+
+    // Load analog sensors
+    JsonArray analogueSensors = doc["analogueSensors"].as<JsonArray>();
+    for (JsonObject sensor : analogueSensors) {
+        AnalogueSensorConfig config;
+        config.type = sensor["type"];
+        config.ads_channel = sensor["ads_channel"];
+        config.input_name = sensor["input_name"];
+        config.sk_path = sensor["sk_path"];
+        config.alarm_path = sensor["alarm_path"];
+        config.description = sensor["description"];
+        config.default_limit = sensor["default_limit"];
+        config.metadata_units = sensor["metadata_units"];
+        config.metadata_display_name = sensor["metadata_display_name"];
+        config.metadata_description = sensor["metadata_description"];
+        config.metadata_short_name = sensor["metadata_short_name"];
+        analogue_sensor_configs_.push_back(config);
+    }
+
+    // Load tacho inputs
+    JsonArray tachoInputs = doc["tachoInputs"].as<JsonArray>();
+    for (JsonObject sensor : tachoInputs) {
+        TachoInputConfig config;
+        config.pin = sensor["pin"];
+        config.input_name = sensor["input_name"];
+        config.sk_path = sensor["sk_path"];
+        config.description = sensor["description"];
+        config.metadata_units = sensor["metadata_units"];
+        config.metadata_display_name = sensor["metadata_display_name"];
+        config.metadata_description = sensor["metadata_description"];
+        config.metadata_short_name = sensor["metadata_short_name"];
+        config.initial_sort_order = sensor["initial_sort_order"];
+        tacho_input_configs_.push_back(config);
+    }
+
+    // Load digital inputs
+    JsonArray digitalInputs = doc["digitalInputs"].as<JsonArray>();
+    for (JsonObject sensor : digitalInputs) {
+        DigitalInputConfig config;
+        config.pin = sensor["pin"];
+        config.input_name = sensor["input_name"];
+        config.alarm_type = sensor["alarm_type"];
+        config.inverted = sensor["inverted"];
+        digital_input_configs_.push_back(config);
+    }
+
+    // Load OneWire temperature sensors
+    JsonArray oneWireTemperatures = doc["oneWireTemperatures"].as<JsonArray>();
+    for (JsonObject sensor : oneWireTemperatures) {
+        OneWireTemperatureConfig config;
+        config.input_name = sensor["input_name"];
+        config.sk_path = sensor["sk_path"];
+        config.description = sensor["description"];
+        config.alarm_path = sensor["alarm_path"];
+        config.default_limit = sensor["default_limit"];
+        config.metadata_units = sensor["metadata_units"];
+        config.metadata_display_name = sensor["metadata_display_name"];
+        config.metadata_description = sensor["metadata_description"];
+        config.metadata_short_name = sensor["metadata_short_name"];
+        config.initial_sort_order = sensor["initial_sort_order"];
+        onewire_temperature_configs_.push_back(config);
+    }
+
+    return true;
+}

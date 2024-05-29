@@ -1,0 +1,106 @@
+{
+    "analogueSensors": [
+      {
+        "type": "TANK_LEVEL_SENSOR",
+        "ads_channel": 1,
+        "input_name": "A1",
+        "sk_path": "/Main Engine Fuel",
+        "description": "Fuel Tank, Main Engine",
+        "default_limit": 0.0,
+        "metadata_units": "l",
+        "metadata_display_name": "Tank Volume",
+        "metadata_description": "Calculated tank remaining volume",
+        "metadata_short_name": "Tank Volume"
+      },
+      {
+        "type": "TEMPERATURE_SENSOR",
+        "ads_channel": 2,
+        "input_name": "A2",
+        "sk_path": "/Main Engine Coolant Temperature",
+        "description": "Engine Coolant Temperature",
+        "default_limit": 0.0,
+        "metadata_units": "C",
+        "metadata_display_name": "Engine Temperature",
+        "metadata_description": "Temperature",
+        "metadata_short_name": "Temp"
+      },
+      {
+        "type": "PRESSURE_SENSOR",
+        "ads_channel": 3,
+        "input_name": "A3",
+        "sk_path": "/Main Engine Oil Pressure",
+        "description": "Engine Oil Pressure",
+        "default_limit": 25.0,
+        "metadata_units": "Pa",
+        "metadata_display_name": "Oil Pressure",
+        "metadata_description": "Pressure",
+        "metadata_short_name": "Press"
+      }
+    ],
+    "tachoInputs": [
+      {
+        "pin": 1,
+        "input_name": "D1",
+        "sk_path": "/Tacho D1",
+        "description": "Enable RPM input D1",
+        "metadata_units": "Hz",
+        "metadata_display_name": "Main Engine Revolutions",
+        "metadata_description": "Main Engine Revolutions",
+        "metadata_short_name": "Revolutions",
+        "initial_sort_order": 5000
+      }
+    ],
+    "digitalInputs": [
+      {
+        "pin": 2,
+        "input_name": "D2",
+        "alarm_type": "LOW_OIL",
+        "inverted": false
+      },
+      {
+        "pin": 3,
+        "input_name": "D3",
+        "alarm_type": "OVER_TEMP",
+        "inverted": true
+      }
+    ],
+    "oneWireTemperatures": [
+      {
+        "input_name": "Oil Temperature",
+        "sk_path": "/Temperature 1",
+        "description": "Engine oil temperature sensor on the 1-Wire bus.",
+        "alarm_path": "/Temperature 1/Oil Temperature Alarm",
+        "default_limit": 383,
+        "metadata_units": "K",
+        "metadata_display_name": "Engine Oil Temperature",
+        "metadata_description": "Engine Oil Temperature",
+        "metadata_short_name": "Oil Temperature",
+        "initial_sort_order": 10000
+      },
+      {
+        "input_name": "Coolant Temperature",
+        "sk_path": "/Temperature 2",
+        "description": "Engine coolant temperature sensor on the 1-Wire bus.",
+        "alarm_path": "/Temperature 2/Coolant Temperature Alarm",
+        "default_limit": 373,
+        "metadata_units": "K",
+        "metadata_display_name": "Engine Coolant Temperature",
+        "metadata_description": "Engine Coolant Temperature",
+        "metadata_short_name": "Coolant Temperature",
+        "initial_sort_order": 11000
+      },
+      {
+        "input_name": "Exhaust Temperature",
+        "sk_path": "/Temperature 3",
+        "description": "Engine wet exhaust temperature sensor on the 1-Wire bus.",
+        "alarm_path": "/Temperature 3/Exhaust Temperature Alarm",
+        "default_limit": 333,
+        "metadata_units": "K",
+        "metadata_display_name": "Wet Exhaust Temperature",
+        "metadata_description": "Wet Exhaust Temperature",
+        "metadata_short_name": "Exhaust Temperature",
+        "initial_sort_order": 12000
+      }
+    ]
+  }
+  

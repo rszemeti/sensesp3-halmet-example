@@ -241,9 +241,15 @@ void setup() {
             enable_n2k_output->get_value());
         n2k_engine_dynamic_sender->set_sort_order(520);
     }
+
+    SystemConfig system_config;
+    if (!system_config.loadFromJson("/config.json")) {
+        Serial.println("Failed to load system configuration");
+        return;
+    }
     // Loop through the sensor configurations and create sensors dynamically
     int sort_order = 1000;
-    for (const auto& config : analogue_sensor_configs) {
+    for (const auto& config : system_config.getAnalogueSensorConfigs()) {
         sort_order += 1000;
         if (config.type == TEMPERATURE_SENSOR) {
             AnalogTemperatureSensor temperature_sensor(
@@ -280,14 +286,14 @@ void setup() {
 
 
     // Loop through the digital input configurations and create sensors dynamically
-    for (const auto& config : digital_input_configs) {
+    for (const auto& config : system_config.getDigitalInputConfigs()) {
         sort_order += 1000;
         DigitalAlarmInput digital_input(config.pin, config.input_name, config.alarm_type, config.inverted);
         digital_input.connect(n2k_engine_dynamic_sender, enable_n2k_output->get_value());
     }
 
     // Loop through the OneWire temperature sensor configurations and create sensors dynamically
-    for (const auto& config : onewire_temperature_configs) {
+    for (const auto& config : system_config.getOneWireTemperatureConfigs() ) {
         sort_order += 1000;
         OneWireTemperatureSensor onewire_temperature_sensor(
             config.input_name, config.sk_path, config.description, config.alarm_path, config.default_limit, 
