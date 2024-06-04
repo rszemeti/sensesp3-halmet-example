@@ -93,7 +93,14 @@ public:
 
             if (enable_n2k_output) {
                 // Connect the temperature output to N2k dynamic sender
-                temperature_curve->connect_to(&(n2k_engine_dynamic_sender->oil_temperature_consumer_));
+                auto kelvin_function = [](float temperature) -> float {
+                    return temperature+273.15;
+                };
+                auto* temperature_kelvin = new LambdaTransform<float, float>(
+                    kelvin_function, "Temperature Kelvin"); 
+                temperature_curve->connect_to(temperature_kelvin);
+                
+                temperature_kelvin->connect_to(&(n2k_engine_dynamic_sender->temperature_consumer_));
             }
 
             if (display_present && display != nullptr) {

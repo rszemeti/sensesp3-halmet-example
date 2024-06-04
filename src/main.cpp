@@ -268,15 +268,14 @@ void setup() {
             pressure_sensor.connect(ads1115, n2k_engine_dynamic_sender, enable_n2k_output->get_value(), display_present, display);
         }
 
-        // Loop through the digital input configurations and create sensors dynamically
-        for (const auto& config : digital_input_configs) {
-            DigitalAlarmInput digital_input(config.pin, config.input_name, config.alarm_type, config.inverted);
-            digital_input.connect(n2k_engine_dynamic_sender, enable_n2k_output->get_value());
-        }
     }
 
 
-
+    // Loop through the digital input configurations and create sensors dynamically
+    for (const auto& config : digital_input_configs) {
+        DigitalAlarmInput digital_input(config.pin, config.input_name, config.alarm_type, config.inverted);
+        digital_input.connect(n2k_engine_dynamic_sender, enable_n2k_output->get_value());
+    }
 
   auto* enable_d1_rpm_output =
       new CheckboxConfig(true, "Enable RPM Output", "/Tacho D1/Enabled");
@@ -332,195 +331,6 @@ void setup() {
   }
 
 
-  ///////////////////////////////////////////////////////////////////
-  // 1-Wire Temperature Sensors
-
-  DallasTemperatureSensors* dts = new DallasTemperatureSensors(kOneWirePin);
-
-  auto main_engine_oil_temperature_metadata =
-      new SKMetadata("K",                       // units
-                     "Engine Oil Temperature",  // display name
-                     "Engine Oil Temperature",  // description
-                     "Oil Temperature",         // short name
-                     10.                        // timeout, in seconds
-      );
-  auto main_engine_coolant_temperature_metadata =
-      new SKMetadata("K",                           // units
-                     "Engine Coolant Temperature",  // display name
-                     "Engine Coolant Temperature",  // description
-                     "Coolant Temperature",         // short name
-                     10.                            // timeout, in seconds
-      );
-  auto main_engine_temperature_metadata =
-      new SKMetadata("K",                   // units
-                     "Engine Temperature",  // display name
-                     "Engine Temperature",  // description
-                     "Temperature",         // short name
-                     10.                    // timeout, in seconds
-      );
-  auto main_engine_exhaust_temperature_metadata =
-      new SKMetadata("K",                        // units
-                     "Wet Exhaust Temperature",  // display name
-                     "Wet Exhaust Temperature",  // description
-                     "Exhaust Temperature",      // short name
-                     10.                         // timeout, in seconds
-      );
-
-  // 1-Wire temperature sensor 1
-
-  OneWireTemperature* main_engine_oil_temperature =
-      new OneWireTemperature(dts, 1000, "/Temperature 1/OneWire");
-  main_engine_oil_temperature->set_description(
-      "Engine oil temperature sensor on the 1-Wire bus.");
-  main_engine_oil_temperature->set_sort_order(6000);
-
-  // connect the sensors to Signal K output paths
-
-  auto oil_temp_sk_output = new SKOutput<float>(
-      "propulsion.main.oilTemperature", "/Temperature 1/SK Path",
-      main_engine_oil_temperature_metadata);
-  oil_temp_sk_output->set_sort_order(6100);
-  main_engine_oil_temperature->connect_to(oil_temp_sk_output);
-
-  main_engine_oil_temperature->connect_to(
-      &(n2k_engine_dynamic_sender->oil_temperature_consumer_));
-
-  Any* temp_alarm = new Any(2);
-  temp_alarm->connect_to(
-      &(n2k_engine_dynamic_sender->over_temperature_consumer_));
-
-  const ParamInfo* oil_temperature_limit =
-      new ParamInfo[1]{{"oil_temperature_limit", "Oil Temperature Limit"}};
-
-  const auto oil_temp_alarm_function = [](float temperature,
-                                          float limit) -> bool {
-    return temperature > limit;
-  };
-
-  auto sender_oil_temp_alarm = new LambdaTransform<float, bool, float>(
-      oil_temp_alarm_function,
-      383,                    // Default value for parameter
-      oil_temperature_limit,  // Parameter UI description
-      "/Temperature 1/Oil Temperature Alarm");
-  sender_oil_temp_alarm->set_description(
-      "Alarm if the oil temperature exceeds the set limit. Value in Kelvin.");
-  sender_oil_temp_alarm->set_sort_order(6200);
-  main_engine_oil_temperature->connect_to(sender_oil_temp_alarm);
-
-  if (enable_n2k_output->get_value()) {
-    // Connect the oil temperature output to N2k dynamic sender
-    main_engine_oil_temperature->connect_to(
-        &(n2k_engine_dynamic_sender->oil_temperature_consumer_));
-
-    // Connect the oil temperature alarm to N2k dynamic sender
-    sender_oil_temp_alarm->connect_to(temp_alarm, 0);
-  }
-
-  // 1-Wire temperature sensor 2
-
-  OneWireTemperature* main_engine_coolant_temperature =
-      new OneWireTemperature(dts, 1000, "/Temperature 2/OneWire");
-  main_engine_coolant_temperature->set_description(
-      "Engine coolant temperature sensor on the 1-Wire bus.");
-  main_engine_coolant_temperature->set_sort_order(7000);
-
-  main_engine_coolant_temperature->connect_to(
-      &(n2k_engine_dynamic_sender->temperature_consumer_));
-
-  auto main_engine_coolant_temperature_sk_output =
-      new SKOutput<float>("propulsion.main.coolantTemperature",
-                          "/Temperature 2/Coolant Temperature SK Path",
-                          main_engine_coolant_temperature_metadata);
-  main_engine_coolant_temperature_sk_output->set_sort_order(7100);
-  auto main_engine_temperature_sk_output = new SKOutput<float>(
-      "propulsion.main.temperature", "/Temperature 2/Temperature SK Path",
-      main_engine_temperature_metadata);
-  main_engine_temperature_sk_output->set_sort_order(7200);
-
-  main_engine_coolant_temperature->connect_to(
-      main_engine_coolant_temperature_sk_output);
-  // transmit coolant temperature as overall engine temperature as well
-  main_engine_coolant_temperature->connect_to(
-      main_engine_temperature_sk_output);
-
-  const ParamInfo* coolant_temperature_limit = new ParamInfo[1]{
-      {"coolant_temperature_limit", "Coolant Temperature Limit"}};
-
-  const auto coolant_temp_alarm_function = [](float temperature,
-                                              float limit) -> bool {
-    return temperature > limit;
-  };
-
-  auto sender_coolant_temp_alarm = new LambdaTransform<float, bool, float>(
-      coolant_temp_alarm_function,
-      373,                        // Default value for parameter
-      coolant_temperature_limit,  // Parameter UI description
-      "/Temperature 2/Coolant Temperature Alarm");
-  sender_coolant_temp_alarm->set_description(
-      "Alarm if the coolant temperature exceeds the set limit. Value in "
-      "Kelvin.");
-  sender_coolant_temp_alarm->set_sort_order(6200);
-  main_engine_coolant_temperature->connect_to(sender_coolant_temp_alarm);
-
-  if (enable_n2k_output->get_value()) {
-    // Connect the coolant temperature output to N2k dynamic sender
-    main_engine_coolant_temperature->connect_to(
-        &(n2k_engine_dynamic_sender->temperature_consumer_));
-
-    // Connect the coolant temperature alarm to N2k dynamic sender
-    sender_coolant_temp_alarm->connect_to(temp_alarm, 0);
-  }
-
-  // 1-Wire temperature sensor 3
-
-  OneWireTemperature* main_engine_exhaust_temperature =
-      new OneWireTemperature(dts, 1000, "/Temperature 3/OneWire");
-  main_engine_exhaust_temperature->set_sort_order(8000);
-  main_engine_exhaust_temperature->set_description(
-      "Engine wet exhaust temperature sensor on the 1-Wire bus.");
-  main_engine_exhaust_temperature->set_sort_order(8100);
-
-  auto main_engine_exhaust_temperature_sk_path = new SKOutput<float>(
-      "propulsion.main.wetExhaustTemperature", "/Temperature 3/SK Path",
-      main_engine_exhaust_temperature_metadata);
-  main_engine_exhaust_temperature_sk_path->set_sort_order(8200);
-  // propulsion.*.wetExhaustTemperature is a non-standard path
-  main_engine_exhaust_temperature->connect_to(
-      main_engine_exhaust_temperature_sk_path);
-
-  const ParamInfo* exhaust_temperature_limit = new ParamInfo[1]{
-      {"exhaust_temperature_limit", "Exhaust Temperature Limit"}};
-
-  const auto exhaust_temp_alarm_function = [](float temperature,
-                                              float limit) -> bool {
-    return temperature > limit;
-  };
-
-  auto sender_exhaust_temp_alarm = new LambdaTransform<float, bool, float>(
-      exhaust_temp_alarm_function,
-      333,                        // Default value for parameter
-      exhaust_temperature_limit,  // Parameter UI description
-      "/Temperature 3/Coolant Temperature Alarm");
-  sender_exhaust_temp_alarm->set_description(
-      "Alarm if the coolant temperature exceeds the set limit. Value in "
-      "Kelvin.");
-  sender_exhaust_temp_alarm->set_sort_order(8300);
-  main_engine_exhaust_temperature->connect_to(sender_exhaust_temp_alarm);
-
-  N2kTemperatureExtSender* n2k_exhaust_temp_sender =
-      new N2kTemperatureExtSender("/Temperature 3/NMEA 2000", 0,
-                                  N2kts_ExhaustGasTemperature, nmea2000,
-                                  enable_n2k_output->get_value());
-  n2k_exhaust_temp_sender->set_sort_order(8400);
-
-  if (enable_n2k_output->get_value()) {
-    // Connect the coolant temperature output to N2k dynamic sender
-    main_engine_exhaust_temperature->connect_to(
-        &(n2k_engine_dynamic_sender->temperature_consumer_));
-
-    // Connect the coolant temperature alarm to N2k dynamic sender
-    sender_exhaust_temp_alarm->connect_to(temp_alarm, 0);
-  }
 
   // FIXME: Transmit the alarms over SK as well.
 
